@@ -23,11 +23,13 @@ addons:
       - flex
       - texinfo
       - python-pexpect
+      - libusb-1.0-0-dev
+      - device-tree-compiler
 
 env:
   global:
     - RISCV="/home/travis/riscv_install"
-    - MAKEFLAGS="-j3"
+    - MAKEFLAGS="-j2"
     - PATH="/home/travis/riscv_install/bin:$PATH"
 
 before_install:
@@ -37,13 +39,18 @@ before_install:
   - cd riscv-tests
   - git submodule update --init
   - cd ..
+  # openocd also needs submodules
+  - cd riscv-openocd
+  - git submodule update --init
+  - cd ..
   # actually use new gcc
   - export CXX=g++-4.8 CC=gcc-4.8
 
 # extra time duing long builds
 install: travis_wait
 
+# pexpect ends up in /usr/lib/python2.7/dist-packages, which is not part of the
+# default python path.
 script:
   - ./build.sh
-  - cd riscv-tests/build
-  - make debug-check
+  - PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/dist-packages make -C riscv-tests/build debug-check
